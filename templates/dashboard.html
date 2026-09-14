@@ -101,7 +101,7 @@
 <table>
 <thead><tr>
 <th>CVE</th><th>Vendor</th><th>Product</th><th>Vulnerability</th>
-<th>Date Added</th><th>Ransomware</th><th>Due Date</th>
+<th>Date Added</th><th>Ransomware</th><th>Due Date</th><th>Detail</th>
 </tr></thead>
 <tbody>
 {% for v in vulnerabilities %}
@@ -113,9 +113,19 @@
 <td>{{ v.date_added }}</td>
 <td>{{ v.ransomware_use or '—' }}</td>
 <td>{{ v.due_date or '—' }}</td>
+<td>
+    <a
+        href="https://nvd.nist.gov/vuln/detail/{{ v.cve_id }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="detail-link"
+    >
+        Detail
+    </a>
+</td>
 </tr>
 {% else %}
-<tr><td colspan="7" class="empty">No vulnerabilities match the filter.</td></tr>
+<tr><td colspan="8" class="empty">No vulnerabilities match the filter.</td></tr>
 {% endfor %}
 </tbody>
 </table>
