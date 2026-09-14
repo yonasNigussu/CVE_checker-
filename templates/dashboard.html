@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CISA KEV Vendor Watch</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="container">
+<header>
+  <div>
+    <h1>CISA KEV Vendor Watch</h1>
+    <p>Automatic monitoring of the CISA Known Exploited Vulnerabilities catalog.</p>
+  </div>
+  <form method="post" action="/sync"><button>↻ Sync now</button></form>
+</header>
+
+<section class="cards">
+  <div class="card"><span>Total KEVs</span><strong>{{ total }}</strong></div>
+  <div class="card"><span>Watched-vendor KEVs</span><strong>{{ watched_count }}</strong></div>
+  <div class="card alert"><span>Unprocessed alerts</span><strong>{{ new_count }}</strong></div>
+  <div class="card"><span>Polling</span><strong>{{ poll_minutes }} min</strong></div>
+</section>
+
+<section class="panel">
+<h2>Vendor Watchlist</h2>
+<p class="muted">Add any vendor exactly as it appears in CISA's <code>vendorProject</code> field. Matching is case-insensitive.</p>
+<form class="add-form" method="post" action="/vendors">
+  <input name="name" placeholder="e.g. Palo Alto Networks" required>
+  <button type="submit">Add vendor</button>
+</form>
+<div class="vendors">
+{% for v in vendors %}
+  <div class="vendor">
+    <span class="{{ 'on' if v.enabled else 'off' }}">{{ '●' if v.enabled else '○' }}</span>
+    <b>{{ v.name }}</b>
+    <form method="post" action="/vendors/{{ v.id }}/toggle"><button class="small">{{ 'Disable' if v.enabled else 'Enable' }}</button></form>
+    <form method="post" action="/vendors/{{ v.id }}/delete" onsubmit="return confirm('Delete this vendor from the watchlist?')"><button class="small danger">Delete</button></form>
+  </div>
+{% endfor %}
+</div>
+</section>
+
+<section class="panel">
+<h2>Vulnerabilities</h2>
+<form class="filters" method="get" action="/">
+
+    <label for="vendor">Filter by:</label>
+
+    <select name="vendor" id="vendor">
+        <option value="my_vendors"
+            {{ 'selected' if selected_vendor == 'my_vendors' else '' }}>
+            My Vendors
+        </option>
+
+        <option value=""
+            {{ 'selected' if selected_vendor == '' else '' }}>
+            All KEVs
+        </option>
+
+        {% for v in vendors %}
+        <option value="{{ v.name }}"
+            {{ 'selected' if selected_vendor.lower() == v.name.lower() else '' }}>
+            {{ v.name }}
+        </option>
+        {% endfor %}
+    </select>
+
+    <label for="date_from">Date Added:</label>
+
+    <input
+        type="date"
+        id="date_from"
+        name="date_from"
+        value="{{ date_from }}"
+    >
+
+    <span>to</span>
+
+    <input
+        type="date"
+        id="date_to"
+        name="date_to"
+        value="{{ date_to }}"
+    >
+
+    <input
+        name="q"
+        value="{{ q }}"
+        placeholder="Search CVE, product, vendor..."
+    >
+
+    <button type="submit">Filter</button>
+
+    <a href="/">Reset</a>
+
+</form>
+
+<div class="table-wrap">
+<table>
+<thead><tr>
+<th>CVE</th><th>Vendor</th><th>Product</th><th>Vulnerability</th>
+<th>Date Added</th><th>Ransomware</th><th>Due Date</th>
+</tr></thead>
+<tbody>
+{% for v in vulnerabilities %}
+<tr>
+<td><b>{{ v.cve_id }}</b>{% if not v.notified %}<span class="new">NEW</span>{% endif %}</td>
+<td>{{ v.vendor }}</td>
+<td>{{ v.product }}</td>
+<td title="{{ v.short_description }}">{{ v.vulnerability_name }}</td>
+<td>{{ v.date_added }}</td>
+<td>{{ v.ransomware_use or '—' }}</td>
+<td>{{ v.due_date or '—' }}</td>
+</tr>
+{% else %}
+<tr><td colspan="7" class="empty">No vulnerabilities match the filter.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+  <span>Last sync:
+  {% if last_sync.time %}{{ last_sync.time.strftime('%Y-%m-%d %H:%M:%S UTC') }}{% else %}not completed{% endif %}
+  </span>
+  {% if last_sync.error %}<span class="error">Error: {{ last_sync.error }}</span>{% endif %}
+</footer>
+</div>
+</body>
+</html>
